@@ -1,0 +1,39 @@
+---
+- block:
+    - name: Install Nginx Debian
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+      when: ansible_facts['os_family'] == "Debian" 
+      notify: redemarrer nginx
+
+    - name: Install Nginx Redhat
+      yum:
+        name: nginx
+        state: present
+      when: ansible_facts['os_family'] == "RedHat"
+      notify: redemarrer nginx
+
+    - name: Demarrer et activer le service Nginx
+      service:
+        name: nginx
+        enabled: yes
+        state: started
+    
+    - name: deployer la configuration
+      template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+        validate: '/usr/sbin/nginx -c %s -t'
+      notify: recharger nginx
+  tags: 
+    - install
+
+- block:
+    - name: Check URL localhost 
+      ansible.builtin.uri:
+        url: http://localhost
+        status_code: 200  
+  tags: 
+    - check
